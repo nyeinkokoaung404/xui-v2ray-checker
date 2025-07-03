@@ -30,9 +30,9 @@ First, ensure your `api.php` file is correctly configured with your V2Ray panel 
     ```php
     $PANELS = [
         'VIP Singapore 🇸🇬 Server(1)' => [
-            'url' => '[http://68.183.229.130:31324/w0MW874U8fevz8D/](http://68.183.229.130:31324/w0MW874U8fevz8D/)',
-            'username' => 'UaU78k6dz5',
-            'password' => 'fdLtSfNoVz'
+            'url' => '[http://34.53.21.67:123456/w0MW874U8fevz8D/](http://34.53.21.67:123456/w0MW874U8fevz8D/)',
+            'username' => 'admin',
+            'password' => 'admin'
         ],
         // ... other panels
     ];
