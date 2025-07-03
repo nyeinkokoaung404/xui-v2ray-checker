@@ -1,0 +1,1491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>V2Ray Account Checker</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
+    <style>
+        /* CSS Variables for theming */
+        :root {
+            --bg-color: #f5f5f5;
+            --text-color: #333;
+            --card-bg: #ffffff;
+            --card-shadow: 0 2px 15px rgba(0,0,0,0.1);
+            --primary: #3a7bd5;
+            --primary-hover: #2c5fb3;
+            --border-color: #e0e0e0;
+            --success-bg: #d4edda;
+            --success-border: #c3e6cb;
+            --error-bg: #f8d7da;
+            --error-border: #f5c6cb;
+            --info-bg: #e7f5fe;
+            --info-border: #b8e2fb;
+            --warning-bg: #fff3cd;
+            --warning-border: #ffeeba;
+        }
+
+        /* Dark mode variables */
+        .dark-mode {
+            --bg-color: #1a1a1a;
+            --text-color: #f0f0f0;
+            --card-bg: #2d2d2d;
+            --card-shadow: 0 2px 15px rgba(0,0,0,0.3);
+            --primary: #4a8df8;
+            --primary-hover: #3a7bd5;
+            --border-color: #444;
+            --success-bg: #1e3a1e;
+            --success-border: #2d5d2d;
+            --error-bg: #3a1e1e;
+            --error-border: #5d2d2d;
+            --info-bg: #1e2e3a;
+            --info-border: #2d4d5d;
+            --warning-bg: #3a3a1e;
+            --warning-border: #5d5d2d;
+        }
+
+        /* Base body styles */
+        body {
+            font-family: 'Segoe UI', 'Roboto', sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: all 0.3s ease; /* Smooth transition for theme changes */
+        }
+
+        /* Main container for content */
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header styling */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        /* Main heading style */
+        h1 {
+            color: var(--primary);
+            margin: 0;
+            font-size: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Menu button in header */
+        .menu-toggle {
+            background: none;
+            border: none;
+            color: var(--text-color);
+            cursor: pointer;
+            font-size: 1.5rem;
+            padding: 5px;
+        }
+
+        /* Sidebar menu styles */
+        .sidebar {
+            height: 100%;
+            width: 0; /* Hidden by default */
+            position: fixed;
+            z-index: 1001; /* Above other content */
+            top: 0;
+            right: 0;
+            background-color: var(--card-bg);
+            overflow-x: hidden;
+            transition: 0.5s; /* Smooth open/close effect */
+            padding-top: 0; /* Adjusted for header within sidebar */
+            box-shadow: var(--card-shadow);
+            display: flex; /* Use flexbox for internal layout */
+            flex-direction: column;
+            justify-content: space-between; /* Distribute space for header and close button */
+        }
+
+        .sidebar.open {
+            width: 250px; /* Default width when open */
+        }
+
+        .sidebar-header {
+            padding: 15px 25px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--primary);
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: center; /* Center the text */
+            align-items: center;
+            animation: fadeIn 1s ease-out; /* Animation for header */
+        }
+
+        /* Animation for sidebar header */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .sidebar-content {
+            flex-grow: 1; /* Allow content to take available space */
+            padding-bottom: 70px; /* Space for floating close button */
+        }
+
+        .sidebar h4 {
+            padding: 10px 25px 5px; /* Adjusted padding for tighter layout */
+            margin-bottom: 5px; /* Reduced margin */
+            margin-top: 15px;
+            color: var(--text-color);
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .sidebar button {
+            padding: 10px 25px; /* Adjusted padding for tighter layout */
+            text-decoration: none;
+            font-size: 1rem;
+            color: var(--text-color);
+            display: flex; /* Use flex for icon and text alignment */
+            align-items: center;
+            gap: 10px; /* Space between icon and text */
+            transition: 0.3s;
+            background: none;
+            border: none;
+            width: 100%;
+            text-align: left;
+            cursor: pointer;
+        }
+
+        .sidebar button:hover {
+            background-color: var(--border-color);
+            color: var(--primary);
+        }
+
+        /* Floating close button at the bottom of the sidebar */
+        .sidebar-close-button {
+            position: sticky; /* Sticky position to stay at the bottom */
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: calc(100% - 50px); /* Adjust width to fit padding */
+            max-width: 200px; /* Max width for the button */
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            box-shadow: var(--card-shadow); /* Add shadow for floating effect */
+            margin-top: 20px; /* Space from content above */
+        }
+
+        .sidebar-close-button:hover {
+            background-color: var(--primary-hover);
+            transform: translateX(-50%) translateY(-2px);
+        }
+
+        /* Card component for sections */
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 10px;
+            box-shadow: var(--card-shadow);
+            padding: 25px;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+        }
+
+        /* Tab navigation container */
+        .tab-container {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+            overflow-x: auto; /* Allows horizontal scrolling for tabs on small screens */
+            white-space: nowrap;
+        }
+
+        /* Individual tab styling */
+        .tab {
+            padding: 12px 25px;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        /* Active tab styling */
+        .tab.active {
+            border-bottom-color: var(--primary);
+            color: var(--primary);
+        }
+
+        /* Tab content sections */
+        .tab-content {
+            display: none; /* Hidden by default */
+        }
+
+        /* Active tab content styling */
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Input group styling */
+        .input-group {
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        /* Label styling */
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        /* Textarea and input field styling */
+        textarea, input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-family: 'Consolas', monospace; /* Monospace font for code/config */
+            background-color: var(--card-bg);
+            color: var(--text-color);
+            transition: all 0.3s ease;
+            box-sizing: border-box; /* Include padding and border in the element's total width and height */
+            max-height: 150px; /* Limit max height for textareas */
+            overflow-y: auto; /* Add scrollbar if content exceeds max-height */
+        }
+
+        textarea {
+            min-height: 100px;
+            resize: vertical; /* Allow vertical resizing by user */
+            max-width: 100%;
+            overflow-x: hidden; /* Hide horizontal scrollbar */
+        }
+
+        /* Button row for grouping buttons */
+        .button-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        /* General button styling */
+        button {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex: 1; /* Make buttons take equal width */
+            justify-content: center;
+        }
+
+        /* Button hover effect */
+        button:hover {
+            background-color: var(--primary-hover);
+            transform: translateY(-2px); /* Slight lift effect */
+        }
+
+        /* Disabled button styling */
+        button:disabled {
+            background-color: #95a5a6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Result card styling */
+        .result-card {
+            margin-top: 30px;
+            display: none; /* Hidden by default */
+        }
+
+        /* Status-based styling for result card */
+        .success {
+            background-color: var(--success-bg);
+            border-left: 4px solid var(--success-border);
+        }
+
+        .error {
+            background-color: var(--error-bg);
+            border-left: 4px solid var(--error-border);
+        }
+
+        .warning {
+            background-color: var(--warning-bg);
+            border-left: 4px solid var(--warning-border);
+        }
+
+        /* Info item (label-value pair) styling */
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px dashed var(--border-color);
+        }
+
+        .info-item:last-child {
+            border-bottom: none; /* No border for the last item */
+        }
+
+        /* Info label styling */
+        .info-label {
+            font-weight: 500;
+            color: var(--primary);
+        }
+
+        /* Loading indicator styling */
+        .loading {
+            text-align: center;
+            margin: 30px 0;
+            display: none;
+        }
+
+        /* Spinner animation */
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-radius: 50%;
+            border-top: 4px solid var(--primary);
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Traffic bar styling */
+        .traffic-bar {
+            height: 10px;
+            background-color: var(--border-color);
+            border-radius: 5px;
+            margin-top: 5px;
+            overflow: hidden;
+        }
+
+        /* Traffic progress bar styling */
+        .traffic-progress {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), #00d2ff);
+            border-radius: 5px;
+            transition: width 0.5s ease; /* Smooth transition for width changes */
+        }
+
+        /* API info section styling */
+        .api-info {
+            background-color: var(--info-bg);
+            border-left: 4px solid var(--info-border);
+            padding: 15px;
+            margin-top: 30px;
+        }
+
+        .api-info h3 {
+            margin-top: 0;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .api-info ul {
+            padding-left: 20px;
+        }
+
+        /* Copy button styling (small) */
+        .copy-btn {
+            background-color: var(--border-color);
+            color: var(--text-color);
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            margin-left: 10px;
+            transition: all 0.2s ease;
+        }
+
+        .copy-btn:hover {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        /* Badge styling */
+        .badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .panel-badge {
+            background-color: #6c757d;
+        }
+
+        .protocol-badge {
+            background-color: #6f42c1;
+        }
+
+        /* Validation error message styling */
+        .validation-error {
+            color: #dc3545;
+            font-size: 0.85rem;
+            margin-top: 5px;
+            display: none; /* Hidden by default */
+        }
+
+        /* Input error state styling */
+        .input-error {
+            border-color: #dc3545 !important;
+        }
+
+        /* Rate limit info styling */
+        .rate-limit-info {
+            font-size: 0.9rem;
+            color: #6c757d;
+            margin-top: 10px;
+        }
+
+        /* QR code container styling */
+        .qr-container {
+            display: none; /* Hidden by default */
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        /* QR code canvas styling */
+        #qrCode {
+            margin: 0 auto;
+            padding: 10px;
+            background: white;
+            border-radius: 5px;
+            max-width: 200px;
+        }
+
+        /* Test connection button styling */
+        .test-connection-btn {
+            background-color: #17a2b8;
+        }
+
+        .test-connection-btn:hover {
+            background-color: #138496;
+        }
+
+        /* Connection status message styling */
+        .connection-status {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            display: none;
+        }
+
+        /* Connection status specific colors */
+        .connection-success {
+            background-color: var(--success-bg);
+            border-left: 4px solid var(--success-border);
+        }
+
+        .connection-failure {
+            background-color: var(--error-bg);
+            border-left: 4px solid var(--error-border);
+        }
+
+        .connection-testing {
+            background-color: var(--info-bg);
+            border-left: 4px solid var(--info-border);
+        }
+
+        /* QR actions button group */
+        .qr-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 15px;
+        }
+
+        .qr-actions button {
+            flex: 0 1 auto; /* Allow buttons to size based on content */
+            padding: 8px 15px;
+        }
+
+        /* Copy notification box */
+        .copy-notification {
+            position: fixed;
+            bottom: 20px; /* Position at the bottom */
+            left: 50%;
+            transform: translateX(-50%); /* Center horizontally */
+            background-color: var(--primary);
+            color: white;
+            padding: 15px 30px; /* Increased padding */
+            border-radius: 8px; /* Slightly more rounded */
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3); /* Stronger shadow */
+            display: none; /* Hidden by default, will be set to flex by JS */
+            z-index: 2000; /* Higher z-index to be on top of sidebar */
+            flex-direction: column; /* Stack text and button vertically */
+            align-items: center; /* Center items horizontally */
+            gap: 10px; /* Space between text and button */
+            font-size: 1.1rem; /* Larger font size */
+        }
+
+        /* OK button for copy notification */
+        .copy-notification .ok-btn {
+            background-color: rgba(255, 255, 255, 0.2); /* Semi-transparent white */
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background-color 0.2s ease;
+        }
+
+        .copy-notification .ok-btn:hover {
+            background-color: rgba(255, 255, 255, 0.4);
+        }
+
+
+        /* Responsive adjustments for smaller screens */
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            h1 {
+                font-size: 1.5rem;
+            }
+            
+            .card {
+                padding: 15px;
+            }
+
+            .tab {
+                padding: 10px 15px;
+                font-size: 0.9rem;
+            }
+
+            .button-row {
+                flex-direction: column; /* Stack buttons vertically */
+            }
+
+            .sidebar.open {
+                width: 85%; /* Adjusted width for mobile screens */
+                max-width: 300px; /* Cap the max width */
+            }
+
+            .copy-notification {
+                width: 80%; /* Make notification narrower on small screens */
+                left: 50%;
+                transform: translate(-50%, -50%);
+                padding: 10px 20px;
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1 id="main-title"><i class="fas fa-shield-alt"></i> V2Ray Account Checker</h1>
+            <button class="menu-toggle" id="menuToggle" onclick="toggleSidebar()">
+                <i class="fas fa-bars"></i>
+            </button>
+        </header>
+
+        <!-- Sidebar Menu -->
+        <div id="sidebar" class="sidebar">
+            <div class="sidebar-header">
+                4 0 4 \ 2.0 [🇲🇲]
+            </div>
+            <div class="sidebar-content">
+                <h4 id="sidebar-theme-title">အသွင်အပြင်</h4>
+                <button id="themeToggle" class="sidebar-button">
+                    <i class="fas fa-moon" id="theme-icon"></i> <span id="theme-text">အမှောင်မုဒ်</span>
+                </button>
+                <h4 id="sidebar-language-title">ဘာသာစကား</h4>
+                <button onclick="setLanguage('my'); toggleSidebar();" class="sidebar-button" id="lang-my">
+                    <i class="fas fa-language"></i> မြန်မာ
+                </button>
+                <button onclick="setLanguage('en'); toggleSidebar();" class="sidebar-button" id="lang-en">
+                    <i class="fas fa-language"></i> English
+                </button>
+            </div>
+            <button class="sidebar-close-button" onclick="toggleSidebar()">
+                <i class="fas fa-times"></i> <span id="btn-close-menu">ပိတ်ရန်</span>
+            </button>
+        </div>
+
+        <div class="card">
+            <div class="tab-container">
+                <div class="tab active" onclick="switchTab('paste')" id="tab-check-config">Check Config</div>
+                <div class="tab" onclick="switchTab('direct')" id="tab-direct-link">Direct Link</div>
+                <div class="tab" onclick="switchTab('api')" id="tab-api-usage">API Usage</div>
+                <div class="tab" onclick="switchTab('qr')" id="tab-qr-code">QR Code</div>
+            </div>
+
+            <div id="paste-tab" class="tab-content active">
+                <div class="input-group">
+                    <label for="config" id="label-paste-config">Paste your V2Ray configuration:</label>
+                    <textarea id="config" placeholder="vmess://... or vless://... or ss://... or trojan://... or user@example.com"></textarea>
+                    <div class="validation-error" id="config-error"></div>
+                </div>
+                <div class="button-row">
+                    <button id="checkBtn" onclick="checkConfig()">
+                        <i class="fas fa-search"></i> <span id="btn-check-account">Check Account</span>
+                    </button>
+                    <button class="test-connection-btn" onclick="testConnection()">
+                        <i class="fas fa-plug"></i> <span id="btn-test-connection">Test Connection</span>
+                    </button>
+                </div>
+                <div class="connection-status" id="connection-status"></div>
+                <div class="rate-limit-info">
+                    <i class="fas fa-info-circle"></i> <span id="rate-limit-paste">Rate limit: 5 requests per minute (simulated)</span>
+                </div>
+            </div>
+
+            <div id="direct-tab" class="tab-content">
+                <div class="input-group">
+                    <label for="config-key" id="label-config-key">Enter your V2Ray key:</label>
+                    <input type="text" id="config-key" placeholder="UUID or email">
+                    <div class="validation-error" id="key-error"></div>
+                </div>
+                <button id="directCheckBtn" onclick="checkDirect()">
+                    <i class="fas fa-link"></i> <span id="btn-generate-link">Generate Link</span>
+                </button>
+                <div class="input-group" style="margin-top: 20px;">
+                    <label id="label-direct-link">Direct Access Link:</label>
+                    <div style="display: flex;">
+                        <input type="text" id="directLink" readonly style="flex-grow: 1; border-top-right-radius: 0; border-bottom-right-radius: 0;">
+                        <button onclick="copyToClipboard('directLink')" class="copy-btn" style="border-top-left-radius: 0; border-bottom-left-radius: 0;">
+                            <i class="far fa-copy"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="rate-limit-info">
+                    <i class="fas fa-info-circle"></i> <span id="rate-limit-direct">Rate limit: 5 requests per minute (simulated)</span>
+                </div>
+            </div>
+
+            <div id="api-tab" class="tab-content">
+                <h3 id="api-doc-title"><i class="fas fa-code"></i> API Documentation</h3>
+                <p id="api-doc-intro">Our API provides programmatic access to check V2Ray account status.</p>
+                
+                <h4 id="api-endpoint-title">Endpoint:</h4>
+                <div style="display: flex;">
+                    <input type="text" value="GET /api.php?config=YOUR_CONFIG" readonly style="flex-grow: 1; font-family: monospace;">
+                    <button onclick="copyToClipboard(this.previousElementSibling)" class="copy-btn">
+                        <i class="far fa-copy"></i>
+                    </button>
+                </div>
+                
+                <h4 id="api-example-request-title">Example Request:</h4>
+                <pre style="background-color: var(--border-color); padding: 10px; border-radius: 5px; overflow-x: auto;">
+GET /api.php?config=vmess://eyJ2IjoiMiIsInBzIjoiVGVzdCIsImlkIjoiMTIzNDU2NzgtMTIzNC0xMjM0LTEyMzQtMTIzNDU2Nzg5MDEyIn0=</pre>
+                
+                <h4 id="api-example-response-title">Example Response:</h4>
+                <pre style="background-color: var(--border-color); padding: 10px; border-radius: 5px; overflow-x: auto;">
+{
+  "api_info": {
+    "api_owner": "Channel 404 Team",
+    "owner_contact": "@nkka404",
+    "updates_channel": "@premium_channel_404",
+    "version": "2.0"
+  },
+  "data": {
+    "panel_name": "Main Server",
+    "protocol": "vmess",
+    "email": "user@example.com",
+    "traffic": {
+      "upload": { "value": 1.23, "unit": "GB", "text": "1.23 GB" },
+      "download": { "value": 3.45, "unit": "GB", "text": "3.45 GB" },
+      "total": { "value": 100, "unit": "GB", "text": "100 GB" },
+      "usage_percentage": "5%"
+    },
+    "expiry": {
+      "formatted": "31-12-2023",
+      "detailed": "31-12-2023 0 Hour 0 Min 0 Sec",
+      "status": "active"
+    }
+  }
+}</pre>
+
+                <div class="rate-limit-info">
+                    <i class="fas fa-info-circle"></i> <span id="rate-limit-api">API rate limit: 5 requests per minute per IP (simulated)</span>
+                </div>
+            </div>
+
+            <div id="qr-tab" class="tab-content">
+                <div class="input-group">
+                    <label for="qr-config" id="label-qr-config">Enter V2Ray configuration for QR code:</label>
+                    <textarea id="qr-config" placeholder="vmess://... or vless://... or ss://... or trojan://..."></textarea>
+                    <div class="validation-error" id="qr-error"></div>
+                </div>
+                <button onclick="generateQRCode()">
+                    <i class="fas fa-qrcode"></i> <span id="btn-show-qr">Show QR Code</span>
+                </button>
+                <div class="qr-container" id="qr-container">
+                    <h4 id="qr-scan-instruction">Scan this QR code with your V2Ray client:</h4>
+                    <canvas id="qrCode"></canvas>
+                    <div class="qr-actions">
+                        <button onclick="downloadQRCode()">
+                            <i class="fas fa-download"></i> <span id="btn-download-qr">Download QR</span>
+                        </button>
+                        <button onclick="copyQRConfig()">
+                            <i class="far fa-copy"></i> <span id="btn-copy-qr-config">Copy Config</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="rate-limit-info">
+                    <i class="fas fa-info-circle"></i> <span id="rate-limit-qr">No rate limits for QR generation</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p id="loading-text">Checking account status...</p>
+        </div>
+
+        <div class="card result-card" id="result">
+            <div class="info-item">
+                <span class="info-label" id="label-status">Status:</span>
+                <span id="status">-</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label" id="label-server">Server:</span>
+                <span id="panel-name" class="badge panel-badge">-</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label" id="label-protocol">Protocol:</span>
+                <span id="protocol" class="badge protocol-badge">-</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label" id="label-email">Email:</span>
+                <span id="email">-</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label" id="label-upload">Upload:</span>
+                <span id="upload">-</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label" id="label-download">Download:</span>
+                <span id="download">-</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label" id="label-total-traffic">Total Traffic:</span>
+                <span id="total">-</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label" id="label-used">Used:</span>
+                <span id="used">-</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label" id="label-usage">Usage:</span>
+                <span id="usage">-</span>
+            </div>
+            <div class="traffic-bar">
+                <div class="traffic-progress" id="usage-bar" style="width: 0%"></div>
+            </div>
+            <div class="info-item">
+                <span class="info-label" id="label-remaining">Remaining:</span>
+                <span id="remaining">-</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label" id="label-expiry-date">Expiry Date:</span>
+                <span id="expiry-date">-</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label" id="label-time-remaining">Time Remaining:</span>
+                <span id="time-remaining">-</span>
+            </div>
+            <div class="info-item" id="qr-result-item" style="display: none;">
+                <span class="info-label" id="label-qr-code-result">QR Code:</span>
+                <button onclick="showConfigQR()" class="copy-btn">
+                    <i class="fas fa-qrcode"></i> <span id="btn-show-qr-result">Show QR Code</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="card api-info">
+            <h3 id="about-service-title"><i class="fas fa-info-circle"></i> About This Service</h3>
+            <p id="about-service-intro">This V2Ray account checker is provided by <strong>Channel 404 Team</strong> for premium users.</p>
+            <p id="owner-info"><i class="fas fa-user"></i> Owner: @nkka404</p>
+            <p id="updates-channel-info"><i class="fas fa-bullhorn"></i> Updates Channel: <a href="https://t.me/premium_channel_404" target="_blank">@premium_channel_404</a></p>
+            <p id="version-info"><i class="fas fa-code-branch"></i> Version: 2.1</p>
+            <p id="features-title"><i class="fas fa-check-circle"></i> Features:</p>
+            <ul>
+                <li id="feature-multi-server">Multi-server support</li>
+                <li id="feature-protocols">All protocol types (VMess, VLESS, Trojan, Shadowsocks)</li>
+                <li id="feature-traffic">Detailed traffic statistics</li>
+                <li id="feature-expiry">Expiry tracking</li>
+                <li id="feature-qr-gen">QR code generation</li>
+                <li id="feature-connection-test">Connection testing (simulated)</li>
+                <li id="feature-rate-limit">Rate limiting protection (simulated)</li>
+            </ul>
+        </div>
+
+        <div class="copy-notification" id="copyNotification">
+            <span id="copy-notification-text">Copied to clipboard!</span>
+            <button class="ok-btn" onclick="hideCopyNotification()"><span id="ok-btn-text">Ok</span></button>
+        </div>
+    </div>
+
+    <script>
+        // Language translations
+        const translations = {
+            en: {
+                // Header
+                'main-title': 'V2Ray Account Checker',
+                'sidebar-theme-title': 'Theme',
+                'theme-text': 'Dark Mode',
+                'sidebar-language-title': 'Language',
+                'btn-close-menu': 'Close',
+                // Tabs
+                'tab-check-config': 'Check Config',
+                'tab-direct-link': 'Direct Link',
+                'tab-api-usage': 'API Usage',
+                'tab-qr-code': 'QR Code',
+                // Paste Tab
+                'label-paste-config': 'Paste your V2Ray configuration:',
+                'btn-check-account': 'Check Account',
+                'btn-test-connection': 'Test Connection',
+                'rate-limit-paste': 'Rate limit: 5 requests per minute (simulated)',
+                'config-error-empty': 'Configuration cannot be empty.',
+                'config-error-invalid': 'Invalid configuration format. Please use vmess://, vless://, ss://, trojan://, or email format.',
+                // Direct Link Tab
+                'label-config-key': 'Enter your V2Ray key:',
+                'btn-generate-link': 'Generate Link',
+                'label-direct-link': 'Direct Access Link:',
+                'rate-limit-direct': 'Rate limit: 5 requests per minute (simulated)',
+                'config-key-empty': 'Please enter a configuration key (UUID or email).',
+                // API Tab
+                'api-doc-title': 'API Documentation',
+                'api-doc-intro': 'Our API provides programmatic access to check V2Ray account status.',
+                'api-endpoint-title': 'Endpoint:',
+                'api-example-request-title': 'Example Request:',
+                'api-example-response-title': 'Example Response:',
+                'rate-limit-api': 'API rate limit: 5 requests per minute per IP (simulated)',
+                // QR Tab
+                'label-qr-config': 'Enter V2Ray configuration for QR code:',
+                'btn-show-qr': 'Show QR Code',
+                'qr-scan-instruction': 'Scan this QR code with your V2Ray client:',
+                'btn-download-qr': 'Download QR',
+                'btn-copy-qr-config': 'Copy Config',
+                'rate-limit-qr': 'No rate limits for QR generation',
+                'qr-gen-error': 'Failed to generate QR code. Invalid data or too long.',
+                // Loading
+                'loading-text': 'Checking account status...',
+                // Result Card Labels
+                'label-status': 'Status:',
+                'label-server': 'Server:',
+                'label-protocol': 'Protocol:',
+                'label-email': 'Email:',
+                'label-upload': 'Upload:',
+                'label-download': 'Download:',
+                'label-total-traffic': 'Total Traffic:',
+                'label-used': 'Used:',
+                'label-usage': 'Usage:',
+                'label-remaining': 'Remaining:',
+                'label-expiry-date': 'Expiry Date:',
+                'label-time-remaining': 'Time Remaining:',
+                'label-qr-code-result': 'QR Code:',
+                'btn-show-qr-result': 'Show QR Code',
+                // About Service
+                'about-service-title': 'About This Service',
+                'about-service-intro': 'This V2Ray account checker is provided by <strong>Channel 404 Team</strong> for premium users.',
+                'owner-info': 'Owner: @nkka404',
+                'updates-channel-info': 'Updates Channel: <a href="https://t.me/premium_channel_404" target="_blank">@premium_channel_404</a>',
+                'version-info': 'Version: 2.1',
+                'features-title': 'Features:',
+                'feature-multi-server': 'Multi-server support',
+                'feature-protocols': 'All protocol types (VMess, VLESS, Trojan, Shadowsocks)',
+                'feature-traffic': 'Detailed traffic statistics',
+                'feature-expiry': 'Expiry tracking',
+                'feature-qr-gen': 'QR code generation',
+                'feature-connection-test': 'Connection testing (simulated)',
+                'feature-rate-limit': 'Rate limiting protection (simulated)',
+                // Copy Notification
+                'copy-notification-text': 'Copied to clipboard!',
+                'ok-btn-text': 'Ok',
+                // Connection Status
+                'conn-testing': '<i class="fas fa-spinner fa-spin"></i> Testing connection...',
+                'conn-success': '<i class="fas fa-check-circle"></i> Connection successful! Server is reachable.',
+                'conn-failure': '<i class="fas fa-times-circle"></i> Connection failed. Server may be down or configuration is invalid.',
+                // General Errors
+                'rate-limit-exceeded': 'Rate limit exceeded. Please try again later.',
+                'network-error': 'Network response was not ok. Status: ',
+                'error-checking-account': 'Error checking account. Please check your configuration.',
+                'connection-error': 'Connection error: ',
+                'seconds-text': 'seconds' // Added for rate limit message
+            },
+            my: {
+                // Header
+                'main-title': 'V2Ray အကောင့်စစ်ဆေးခြင်း',
+                'sidebar-theme-title': 'အသွင်အပြင်',
+                'theme-text': 'အမှောင်မုဒ်',
+                'sidebar-language-title': 'ဘာသာစကား',
+                'btn-close-menu': 'ပိတ်ရန်',
+                // Tabs
+                'tab-check-config': 'Config စစ်ဆေးရန်',
+                'tab-direct-link': 'တိုက်ရိုက်လင့်ခ်',
+                'tab-api-usage': 'API အသုံးပြုပုံ',
+                'tab-qr-code': 'QR ကုဒ်',
+                // Paste Tab
+                'label-paste-config': 'သင်၏ V2Ray configuration ကို ထည့်ပါ:',
+                'btn-check-account': 'အကောင့်စစ်ဆေးရန်',
+                'btn-test-connection': 'ချိတ်ဆက်မှု စမ်းသပ်ရန်',
+                'rate-limit-paste': 'နှုန်းကန့်သတ်ချက်: တစ်မိနစ်လျှင် 5 ကြိမ် (ပုံစံတူ)',
+                'config-error-empty': 'Configuration ဗလာဖြစ်၍ မရပါ။',
+                'config-error-invalid': 'Configuration ပုံစံမမှန်ပါ။ vmess://, vless://, ss://, trojan://, သို့မဟုတ် email ပုံစံကို အသုံးပြုပါ။',
+                // Direct Link Tab
+                'label-config-key': 'သင်၏ V2Ray key ကို ထည့်ပါ:',
+                'btn-generate-link': 'လင့်ခ်ထုတ်လုပ်ရန်',
+                'label-direct-link': 'တိုက်ရိုက်ဝင်ရောက်နိုင်သော လင့်ခ်:',
+                'rate-limit-direct': 'နှုန်းကန့်သတ်ချက်: တစ်မိနစ်လျှင် 5 ကြိမ် (ပုံစံတူ)',
+                'config-key-empty': 'Configuration key (UUID သို့မဟုတ် email) ထည့်ပါ။',
+                // API Tab
+                'api-doc-title': 'API စာရွက်စာတမ်း',
+                'api-doc-intro': 'ကျွန်ုပ်တို့၏ API သည် V2Ray အကောင့်အခြေအနေကို စစ်ဆေးရန် ပရိုဂရမ်ဖြင့် ဝင်ရောက်ခွင့်ပေးပါသည်။',
+                'api-endpoint-title': 'Endpoint:',
+                'api-example-request-title': 'နမူနာ တောင်းဆိုမှု:',
+                'api-example-response-title': 'နမူနာ တုံ့ပြန်မှု:',
+                'rate-limit-api': 'API နှုန်းကန့်သတ်ချက်: IP တစ်ခုလျှင် တစ်မိနစ် ၅ ကြိမ် (ပုံစံတူ)',
+                // QR Tab
+                'label-qr-config': 'QR ကုဒ်အတွက် V2Ray configuration ကို ထည့်ပါ:',
+                'btn-show-qr': 'QR ကုဒ် ပြရန်',
+                'qr-scan-instruction': 'သင်၏ V2Ray client ဖြင့် ဤ QR ကုဒ်ကို scan ဖတ်ပါ:',
+                'btn-download-qr': 'QR ဒေါင်းလုဒ်လုပ်ရန်',
+                'btn-copy-qr-config': 'Config ကူးရန်',
+                'rate-limit-qr': 'QR ထုတ်လုပ်ခြင်းအတွက် နှုန်းကန့်သတ်ချက် မရှိပါ',
+                'qr-gen-error': 'QR ကုဒ် ထုတ်လုပ်မှု မအောင်မြင်ပါ။ ဒေတာ မမှန်ခြင်း သို့မဟုတ် အလွန်ရှည်လျားခြင်း ဖြစ်နိုင်သည်။',
+                // Loading
+                'loading-text': 'အကောင့်အခြေအနေ စစ်ဆေးနေပါသည်...',
+                // Result Card Labels
+                'label-status': 'အခြေအနေ:',
+                'label-server': 'ဆာဗာ:',
+                'label-protocol': 'ပရိုတိုကော:',
+                'label-email': 'အီးမေးလ်:',
+                'label-upload': 'အပ်လုဒ်:',
+                'label-download': 'ဒေါင်းလုဒ်:',
+                'label-total-traffic': 'စုစုပေါင်း အသုံးပြုမှု:',
+                'label-used': 'အသုံးပြုပြီး:',
+                'label-usage': 'အသုံးပြုမှု ရာခိုင်နှုန်း:',
+                'label-remaining': 'ကျန်ရှိ:',
+                'label-expiry-date': 'သက်တမ်းကုန်ဆုံးရက်:',
+                'label-time-remaining': 'ကျန်ရှိချိန်:',
+                'label-qr-code-result': 'QR ကုဒ်:',
+                'btn-show-qr-result': 'QR ကုဒ် ပြရန်',
+                // About Service
+                'about-service-title': 'ဤဝန်ဆောင်မှုအကြောင်း',
+                'about-service-intro': 'ဤ V2Ray အကောင့်စစ်ဆေးခြင်း ဝန်ဆောင်မှုကို <strong>Channel 404 Team</strong> မှ premium အသုံးပြုသူများအတွက် ပံ့ပိုးပေးပါသည်။',
+                'owner-info': 'ပိုင်ရှင်: @nkka404',
+                'updates-channel-info': 'အပ်ဒိတ်ချန်နယ်: <a href="https://t.me/premium_channel_404" target="_blank">@premium_channel_404</a>',
+                'version-info': 'ဗားရှင်း: 2.1',
+                'features-title': 'အင်္ဂါရပ်များ:',
+                'feature-multi-server': 'ဆာဗာမျိုးစုံ ထောက်ပံ့ခြင်း',
+                'feature-protocols': 'ပရိုတိုကော အမျိုးအစားအားလုံး (VMess, VLESS, Trojan, Shadowsocks)',
+                'feature-traffic': 'အသေးစိတ် အသုံးပြုမှု စာရင်းဇယားများ',
+                'feature-expiry': 'သက်တမ်းကုန်ဆုံးမှု ခြေရာခံခြင်း',
+                'feature-qr-gen': 'QR ကုဒ် ထုတ်လုပ်ခြင်း',
+                'feature-connection-test': 'ချိတ်ဆက်မှု စမ်းသပ်ခြင်း (ပုံစံတူ)',
+                'feature-rate-limit': 'နှုန်းကန့်သတ်ချက် ကာကွယ်ခြင်း (ပုံစံတူ)',
+                // Copy Notification
+                'copy-notification-text': 'ကလစ်ဘုတ်သို့ ကူးယူပြီးပါပြီ!',
+                'ok-btn-text': 'Ok',
+                // Connection Status
+                'conn-testing': '<i class="fas fa-spinner fa-spin"></i> ချိတ်ဆက်မှု စမ်းသပ်နေပါသည်...',
+                'conn-success': '<i class="fas fa-check-circle"></i> ချိတ်ဆက်မှု အောင်မြင်ပါသည်! ဆာဗာကို ရောက်ရှိနိုင်ပါသည်။',
+                'conn-failure': '<i class="fas fa-times-circle"></i> ချိတ်ဆက်မှု မအောင်မြင်ပါ။ ဆာဗာ ပိတ်ထားခြင်း သို့မဟုတ် configuration မမှန်ခြင်း ဖြစ်နိုင်သည်။',
+                // General Errors
+                'rate-limit-exceeded': 'နှုန်းကန့်သတ်ချက် ကျော်လွန်သွားပါပြီ။ နောက်မှ ထပ်ကြိုးစားပါ။',
+                'network-error': 'ကွန်ရက် တုံ့ပြန်မှု မမှန်ပါ။ အခြေအနေ: ',
+                'error-checking-account': 'အကောင့်စစ်ဆေးရာတွင် အမှားအယွင်းရှိပါသည်။ သင်၏ configuration ကို စစ်ဆေးပါ။',
+                'connection-error': 'ချိတ်ဆက်မှု အမှားအယွင်း: ',
+                'seconds-text': 'စက္ကန့်' // Added for rate limit message
+            }
+        };
+
+        let currentLanguage = localStorage.getItem('language') || 'en';
+
+        // Function to set the language
+        function setLanguage(lang) {
+            currentLanguage = lang;
+            localStorage.setItem('language', lang);
+
+            // Iterate over all elements that need translation
+            for (const key in translations[currentLanguage]) {
+                const element = document.getElementById(key);
+                if (element) {
+                    // Special handling for elements that contain HTML (like the updates-channel-info link and about-service-intro)
+                    if (key === 'updates-channel-info' || key === 'about-service-intro') {
+                        element.innerHTML = translations[currentLanguage][key];
+                    }
+                    // Handle button text (which has an icon and a span)
+                    else if (element.tagName === 'BUTTON' && element.querySelector('span')) {
+                        element.querySelector('span').textContent = translations[currentLanguage][key];
+                    }
+                    // Handle main title (which has an icon and text)
+                    else if (key === 'main-title') {
+                        element.innerHTML = `<i class="fas fa-shield-alt"></i> ${translations[currentLanguage][key]}`;
+                    }
+                    // Default for other text content
+                    else {
+                        element.textContent = translations[currentLanguage][key];
+                    }
+                }
+            }
+            // Update theme text based on current theme (this needs to be called after other text is set)
+            updateThemeIcon();
+
+            // Update connection status messages if visible (these are dynamic innerHTML)
+            const connStatus = document.getElementById('connection-status');
+            if (connStatus.style.display !== 'none') {
+                if (connStatus.classList.contains('connection-testing')) {
+                    connStatus.innerHTML = translations[currentLanguage]['conn-testing'];
+                } else if (connStatus.classList.contains('connection-success')) {
+                    connStatus.innerHTML = translations[currentLanguage]['conn-success'];
+                } else if (connStatus.classList.contains('connection-failure')) {
+                    connStatus.innerHTML = translations[currentLanguage]['conn-failure'];
+                }
+            }
+        }
+
+        // Theme switcher logic
+        const themeToggle = document.getElementById('themeToggle');
+        const prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)');
+        
+        // Initialize theme based on local storage or system preference
+        const currentTheme = localStorage.getItem('theme') || 
+                             (prefersDarkScheme.matches ? 'dark' : 'light');
+        document.body.classList.toggle('dark-mode', currentTheme === 'dark');
+        updateThemeIcon(); // Set initial icon
+
+        // Event listener for theme toggle button
+        themeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('dark-mode');
+            const newTheme = document.body.classList.contains('dark-mode') ? 'dark' : 'light';
+            localStorage.setItem('theme', newTheme); // Save preference
+            updateThemeIcon(); // Update icon
+            toggleSidebar(); // Close sidebar after theme change
+        });
+        
+        // Function to update the theme icon and text
+        function updateThemeIcon() {
+            const icon = document.getElementById('theme-icon');
+            const text = document.getElementById('theme-text');
+            if (document.body.classList.contains('dark-mode')) {
+                icon.classList.replace('fa-moon', 'fa-sun');
+                text.textContent = translations[currentLanguage]['theme-text'].replace('အမှောင်မုဒ်', 'အလင်းမုဒ်'); // Update text for light mode
+                text.textContent = translations[currentLanguage]['theme-text'].replace('Dark Mode', 'Light Mode'); // For English
+            } else {
+                icon.classList.replace('fa-sun', 'fa-moon');
+                text.textContent = translations[currentLanguage]['theme-text'].replace('အလင်းမုဒ်', 'အမှောင်မုဒ်'); // Update text for dark mode
+                text.textContent = translations[currentLanguage]['theme-text'].replace('Light Mode', 'Dark Mode'); // For English
+            }
+        }
+        
+        // Sidebar toggle logic
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            if (sidebar.style.width === '0px' || sidebar.style.width === '') {
+                sidebar.style.width = '250px'; // Open sidebar
+                // For mobile, make it a reasonable percentage
+                if (window.innerWidth <= 768) {
+                    sidebar.style.width = '85%'; // 85% of viewport width
+                    sidebar.style.maxWidth = '300px'; // Cap the max width
+                }
+            } else {
+                sidebar.style.width = '0px'; // Close sidebar
+            }
+        }
+
+        // Tab switching logic
+        function switchTab(tabName) {
+            // Deactivate all tabs and tab contents
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+
+            // Activate the selected tab and its content
+            document.querySelector(`.tab[onclick*="${tabName}"]`).classList.add('active');
+            document.getElementById(tabName + '-tab').classList.add('active');
+            
+            // Clear validation errors when switching tabs
+            clearValidationErrors();
+            // Hide QR container if not on QR tab
+            document.getElementById('qr-container').style.display = 'none';
+        }
+        
+        // Clear all validation error messages and input error states
+        function clearValidationErrors() {
+            document.querySelectorAll('.validation-error').forEach(el => {
+                el.style.display = 'none';
+            });
+            document.querySelectorAll('textarea, input[type="text"]').forEach(el => {
+                el.classList.remove('input-error');
+            });
+        }
+        
+        // Copy text to clipboard and show notification
+        function copyToClipboard(element) {
+            const text = typeof element === 'string' ? 
+                document.getElementById(element).value : 
+                element.value;
+            
+            // Use execCommand for broader compatibility in iframes
+            const tempInput = document.createElement('textarea');
+            tempInput.value = text;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempInput);
+
+            showCopyNotification();
+        }
+        
+        // Show the copy notification
+        function showCopyNotification() {
+            const notification = document.getElementById('copyNotification');
+            notification.style.display = 'flex'; // Use flex to show the notification and its close button
+            document.getElementById('copy-notification-text').textContent = translations[currentLanguage]['copy-notification-text'];
+            document.getElementById('ok-btn-text').textContent = translations[currentLanguage]['ok-btn-text'];
+
+            // Set a timeout to hide the notification after 3 seconds
+            setTimeout(() => {
+                hideCopyNotification();
+            }, 3000); // 3000 milliseconds = 3 seconds
+        }
+
+        // Hide the copy notification
+        function hideCopyNotification() {
+            const notification = document.getElementById('copyNotification');
+            notification.style.display = 'none';
+        }
+        
+        // Validate V2Ray configuration format
+        function validateConfig(config) {
+            if (!config) {
+                return { valid: false, error: translations[currentLanguage]['config-error-empty'] };
+            }
+            
+            // Updated patterns to be more robust for various V2Ray protocols
+            const patterns = [
+                /^vmess:\/\/[a-zA-Z0-9+/=]+$/, // VMess
+                /^vless:\/\/[a-zA-Z0-9-]+@[^\s]+$/, // VLESS
+                // Shadowsocks regex: Handles base64 encoded part, optional method/password, host:port, and optional query/fragment
+                /^ss:\/\/[a-zA-Z0-9%+\-._~]+(=*)@[a-zA-Z0-9.-]+:[0-9]+\/?(?:[?#].*)?$/, 
+                /^trojan:\/\/[a-zA-Z0-9-]+@[^\s]+$/, // Trojan
+                /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/ // Email pattern
+            ];
+            
+            const isValid = patterns.some(pattern => pattern.test(config));
+            if (!isValid) {
+                return { 
+                    valid: false, 
+                    error: translations[currentLanguage]['config-error-invalid']
+                };
+            }
+            
+            return { valid: true };
+        }
+        
+        // Display validation error message
+        function showValidationError(fieldId, errorId, message) {
+            const field = document.getElementById(fieldId);
+            const errorElement = document.getElementById(errorId);
+            
+            field.classList.add('input-error');
+            errorElement.textContent = message;
+            errorElement.style.display = 'block';
+        }
+        
+        // Clear specific validation error
+        function clearValidationError(fieldId, errorId) {
+            const field = document.getElementById(fieldId);
+            const errorElement = document.getElementById(errorId);
+            
+            field.classList.remove('input-error');
+            errorElement.style.display = 'none';
+        }
+        
+        // Simulated Rate limiting
+        let lastRequestTime = 0;
+        const RATE_LIMIT_INTERVAL = 12000; // 12 seconds for 5 requests per minute
+        
+        function checkRateLimit() {
+            const now = Date.now();
+            if (now - lastRequestTime < RATE_LIMIT_INTERVAL) {
+                const timeLeft = Math.ceil((RATE_LIMIT_INTERVAL - (now - lastRequestTime)) / 1000);
+                return { 
+                    allowed: false, 
+                    message: (translations[currentLanguage]['rate-limit-paste'].includes('(') ? translations[currentLanguage]['rate-limit-paste'].split('(')[0] : translations[currentLanguage]['rate-limit-paste']) + `: ${timeLeft} ${translations[currentLanguage]['seconds-text'] || 'seconds'}`
+                };
+            }
+            lastRequestTime = now;
+            return { allowed: true };
+        }
+        
+        // Function to initiate configuration check
+        function checkConfig() {
+            const config = document.getElementById('config').value.trim();
+            clearValidationError('config', 'config-error'); // Clear previous errors
+            
+            const validation = validateConfig(config);
+            if (!validation.valid) {
+                showValidationError('config', 'config-error', validation.error);
+                return;
+            }
+            
+            const rateLimit = checkRateLimit();
+            if (!rateLimit.allowed) {
+                showResult(rateLimit.message, 'warning');
+                return;
+            }
+            
+            checkConfiguration(config); // Proceed with simulated API call
+        }
+        
+        // Function to generate direct link and check configuration
+        function checkDirect() {
+            const config = document.getElementById('config-key').value.trim();
+            clearValidationError('config-key', 'key-error'); // Clear previous errors
+            
+            if (!config) {
+                showValidationError('config-key', 'key-error', translations[currentLanguage]['config-key-empty']);
+                return;
+            }
+            
+            const rateLimit = checkRateLimit();
+            if (!rateLimit.allowed) {
+                showResult(rateLimit.message, 'warning');
+                return;
+            }
+            
+            // Construct the direct link (example: current URL + ?config=...)
+            const directLink = `${window.location.href.split('?')[0]}?config=${encodeURIComponent(config)}`;
+            document.getElementById('directLink').value = directLink;
+            
+            checkConfiguration(config); // Proceed with simulated API call
+        }
+        
+        // Simulated function to check configuration against a backend API
+        function checkConfiguration(config) {
+            const resultDiv = document.getElementById('result');
+            const loadingDiv = document.getElementById('loading');
+            const checkBtn = document.getElementById('checkBtn');
+            const directCheckBtn = document.getElementById('directCheckBtn');
+            
+            loadingDiv.style.display = 'block'; // Show loading spinner
+            resultDiv.style.display = 'none'; // Hide previous results
+            if (checkBtn) checkBtn.disabled = true; // Disable buttons during check
+            if (directCheckBtn) directCheckBtn.disabled = true;
+            
+            // Simulate API call using fetch (replace with actual backend endpoint)
+            fetch('api.php', {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ config: config })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    // Simulate different error responses
+                    if (response.status === 429) { // Too Many Requests
+                        throw new Error(translations[currentLanguage]['rate-limit-exceeded']);
+                    }
+                    throw new Error(translations[currentLanguage]['network-error'] + response.status);
+                }
+                return response.json();
+            })
+            .then(data => {
+                loadingDiv.style.display = 'none'; // Hide loading spinner
+                if (checkBtn) checkBtn.disabled = false; // Re-enable buttons
+                if (directCheckBtn) directCheckBtn.disabled = false;
+                
+                if (!data.success || data.error) {
+                    showResult(data.error || translations[currentLanguage]['error-checking-account'], 'error');
+                    return;
+                }
+                
+                displayResult(data.data, config); // Display detailed results
+            })
+            .catch(error => {
+                loadingDiv.style.display = 'none'; // Hide loading spinner
+                if (checkBtn) checkBtn.disabled = false; // Re-enable buttons
+                if (directCheckBtn) directCheckBtn.disabled = false;
+                showResult(translations[currentLanguage]['connection-error'] + error.message, 'error'); // Show connection error
+            });
+        }
+        
+        // Simulated function to test connection to a V2Ray server
+        function testConnection() {
+            const config = document.getElementById('config').value.trim();
+            clearValidationError('config', 'config-error');
+            
+            const validation = validateConfig(config);
+            if (!validation.valid) {
+                showValidationError('config', 'config-error', validation.error);
+                return;
+            }
+            
+            const statusElement = document.getElementById('connection-status');
+            statusElement.className = 'connection-status connection-testing';
+            statusElement.innerHTML = translations[currentLanguage]['conn-testing'];
+            statusElement.style.display = 'block';
+            
+            // Simulate connection test result after a delay
+            setTimeout(() => {
+                const isSuccess = Math.random() > 0.3; // 70% chance of success for demo
+                
+                if (isSuccess) {
+                    statusElement.className = 'connection-status connection-success';
+                    statusElement.innerHTML = translations[currentLanguage]['conn-success'];
+                } else {
+                    statusElement.className = 'connection-status connection-failure';
+                    statusElement.innerHTML = translations[currentLanguage]['conn-failure'];
+                }
+            }, 2000); // 2-second simulation delay
+        }
+        
+        // Show a generic result message (e.g., for errors or warnings)
+        function showResult(message, type) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.className = `card result-card ${type}`;
+            resultDiv.innerHTML = `<p style="margin: 0;">${message}</p>`;
+            resultDiv.style.display = 'block';
+            document.getElementById('qr-result-item').style.display = 'none'; // Hide QR button if showing generic message
+        }
+        
+        // Display detailed account information
+        function displayResult(data, originalConfig = '') {
+            const resultDiv = document.getElementById('result');
+            resultDiv.className = 'card result-card success'; // Always success for detailed display
+            resultDiv.style.display = 'block';
+            
+            // Update all info fields with data
+            document.getElementById('status').innerHTML = data.enable ? 
+                '<span style="color: #28a745;">✅ Active</span>' : 
+                '<span style="color: #dc3545;">⛔️ Inactive</span>';
+            
+            document.getElementById('panel-name').textContent = data.panel_name || 'N/A';
+            document.getElementById('protocol').textContent = (data.protocol || 'N/A').toUpperCase();
+            document.getElementById('email').textContent = data.email || 'N/A';
+            document.getElementById('upload').textContent = data.traffic?.upload?.text || 'N/A';
+            document.getElementById('download').textContent = data.traffic?.download?.text || 'N/A';
+            document.getElementById('total').textContent = data.traffic?.total?.text || 'N/A';
+            
+            const usedTraffic = (data.traffic?.upload?.value || 0) + (data.traffic?.download?.value || 0);
+            const totalTraffic = data.traffic?.total?.value || 0;
+            const remainingTraffic = Math.max(0, totalTraffic - usedTraffic);
+            
+            document.getElementById('used').textContent = `${usedTraffic.toFixed(2)} ${data.traffic?.total?.unit || 'GB'}`;
+            document.getElementById('remaining').textContent = `${remainingTraffic.toFixed(2)} ${data.traffic?.total?.unit || 'GB'}`;
+
+            const usagePercentage = parseFloat(data.traffic?.usage_percentage) || 0;
+            document.getElementById('usage').textContent = `${usagePercentage}%`;
+            document.getElementById('usage-bar').style.width = `${usagePercentage}%`; // Update progress bar
+
+            document.getElementById('expiry-date').textContent = data.expiry?.expiry_date_formatted || 'N/A';
+            document.getElementById('time-remaining').textContent = data.expiry?.remaining_time_text || 'N/A';
+
+            // Store the config for QR generation later
+            if (originalConfig) {
+                document.getElementById('qr-result-item').style.display = 'flex';
+                document.getElementById('qr-result-item').dataset.config = originalConfig; // Store config in dataset
+            } else {
+                document.getElementById('qr-result-item').style.display = 'none';
+            }
+        }
+
+        // Generate QR code from input field
+        function generateQRCode() {
+            const config = document.getElementById('qr-config').value.trim();
+            clearValidationError('qr-config', 'qr-error');
+
+            const validation = validateConfig(config);
+            if (!validation.valid) {
+                showValidationError('qr-config', 'qr-error', validation.error);
+                document.getElementById('qr-container').style.display = 'none';
+                return;
+            }
+
+            const qrContainer = document.getElementById('qr-container');
+            const qrCodeCanvas = document.getElementById('qrCode');
+            qrContainer.style.display = 'block'; // Show QR container
+
+            // Clear previous QR code
+            const context = qrCodeCanvas.getContext('2d');
+            context.clearRect(0, 0, qrCodeCanvas.width, qrCodeCanvas.height);
+
+            // Generate new QR code
+            QRCode.toCanvas(qrCodeCanvas, config, function (error) {
+                if (error) {
+                    console.error(error);
+                    showValidationError('qr-config', 'qr-error', translations[currentLanguage]['qr-gen-error']);
+                    qrContainer.style.display = 'none';
+                }
+            });
+        }
+
+        // Show QR code for the config that was just checked
+        function showConfigQR() {
+            const config = document.getElementById('qr-result-item').dataset.config;
+            if (config) {
+                // Switch to QR tab and populate its textarea
+                switchTab('qr');
+                document.getElementById('qr-config').value = config;
+                generateQRCode(); // Generate QR for this config
+            }
+        }
+
+        // Download generated QR code
+        function downloadQRCode() {
+            const qrCodeCanvas = document.getElementById('qrCode');
+            const link = document.createElement('a');
+            link.download = 'v2ray_qrcode.png';
+            link.href = qrCodeCanvas.toDataURL('image/png');
+            link.click();
+        }
+
+        // Copy config from QR tab textarea
+        function copyQRConfig() {
+            copyToClipboard('qr-config');
+        }
+
+        // Initialize with the first tab active and set initial language
+        document.addEventListener('DOMContentLoaded', () => {
+            setLanguage(currentLanguage); // Apply initial language
+            switchTab('paste');
+        });
+    </script>
+</body>
+</html>
